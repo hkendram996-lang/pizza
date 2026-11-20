@@ -23,11 +23,30 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&am
 const htmlLocal = () =>
   `<div style="width:46px;height:46px;border-radius:50%;background:#fbf8f3 var(--logo, none) center/cover no-repeat;border:3px solid #1f2b21;box-shadow:0 4px 14px rgba(0,0,0,.35);display:grid;place-items:center;font-size:20px"></div>`;
 
-const htmlRider = (r) =>
-  `<div style="position:relative;width:34px;height:34px">
-     <div style="position:absolute;inset:-6px;border-radius:50%;background:${r.color};opacity:.22"></div>
-     <div style="position:absolute;inset:0;border-radius:50%;background:${r.color};border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.35);display:grid;place-items:center;color:#fff;font:700 14px Outfit,system-ui,sans-serif">${esc((r.nombre || '?')[0])}</div>
-   </div>`;
+// Repartidor: el monito Manechi con su mochila del color del repartidor y su inicial
+const htmlRider = (r) => {
+  const c = esc(r.color || '#a8532f');
+  const ini = esc((r.nombre || '?')[0].toUpperCase());
+  return `<svg width="50" height="50" viewBox="0 0 64 64" style="overflow:visible;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))">
+    <ellipse cx="32" cy="59" rx="16" ry="3.5" fill="${c}" opacity=".3"/>
+    <path d="M20 50 C9 50 7 39 13 36 C18 34 20 40 16 41" fill="none" stroke="#7a3f22" stroke-width="3.2" stroke-linecap="round"/>
+    <ellipse cx="33" cy="45" rx="11" ry="12" fill="#9c5530"/>
+    <ellipse cx="36" cy="47" rx="6" ry="7.5" fill="#e9c39b"/>
+    <rect x="23" y="53" width="7" height="5" rx="2.5" fill="#7a3f22"/>
+    <rect x="35" y="53" width="7" height="5" rx="2.5" fill="#7a3f22"/>
+    <rect x="8" y="34" width="19" height="21" rx="5" fill="${c}" stroke="#fff" stroke-width="2"/>
+    <path d="M8 41 Q17.5 45 27 41" fill="none" stroke="#fff" stroke-width="1.5" opacity=".6"/>
+    <text x="17.5" y="51.5" text-anchor="middle" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="12" fill="#fff">${ini}</text>
+    <circle cx="23" cy="20" r="5" fill="#9c5530"/><circle cx="23" cy="20" r="2.6" fill="#e9c39b"/>
+    <circle cx="49" cy="20" r="5" fill="#9c5530"/><circle cx="49" cy="20" r="2.6" fill="#e9c39b"/>
+    <circle cx="36" cy="20" r="13" fill="#9c5530"/>
+    <path d="M26 22 C26 15 31 14 33 17 C35 14 40 14 41 17 C43 14 47 16 46 22 C46 30 40 32 36 32 C31 32 26 30 26 22Z" fill="#e9c39b"/>
+    <circle cx="32" cy="20" r="2" fill="#1f2b21"/><circle cx="40" cy="20" r="2" fill="#1f2b21"/>
+    <circle cx="32.6" cy="19.3" r=".6" fill="#fff"/><circle cx="40.6" cy="19.3" r=".6" fill="#fff"/>
+    <path d="M32.5 26 Q36 29 39.5 26" fill="none" stroke="#5a2c17" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M34 8 Q36 4 38 8" fill="none" stroke="#7a3f22" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+};
 
 const htmlDestino = (d) =>
   `<div style="display:flex;flex-direction:column;align-items:center;transform:translateY(-14px)">
@@ -105,8 +124,8 @@ export default function Mapa({ local, zonas = [], repartidores = [], destinos = 
     }
     for (const r of repartidores) {
       if (r.lat == null) continue;
-      L.marker([r.lat, r.lng], { icon: icono(htmlRider(r), 34, 34), zIndexOffset: 1000 })
-        .bindTooltip(esc(r.nombre), { direction: 'top', offset: [0, -18] }).addTo(capa);
+      L.marker([r.lat, r.lng], { icon: icono(htmlRider(r), 50, 50, 25, 46), zIndexOffset: 1000 })
+        .bindTooltip(esc(r.nombre), { direction: 'top', offset: [0, -44] }).addTo(capa);
       puntos.push([r.lat, r.lng]);
     }
     if (encuadrar && !ref.current.centrado && puntos.length > 1) {
