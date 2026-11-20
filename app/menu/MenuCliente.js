@@ -201,13 +201,13 @@ export default function MenuCliente({ productos, negocio }) {
       </header>
 
       {/* Categorías */}
-      <nav className="mn-cats" aria-label="Categorías">
+      <div className="mn-cats" role="navigation" aria-label="Categorías">
         {categorias.map(c => (
           <button key={c.nombre} className={activa === c.nombre ? 'on' : ''} onClick={() => irA(c.nombre)}>
             <span>{ICONO[c.nombre] || '🌿'}</span>{c.nombre}
           </button>
         ))}
-      </nav>
+      </div>
 
       {mesa && (
         <div className="mn-mesa"><span>🍽️</span><div><b>Estás en la Mesa {mesa}</b><small>Elegí, tocá "Pedir" y te lo llevamos a la mesa.</small></div></div>
