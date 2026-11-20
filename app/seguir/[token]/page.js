@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useParams } from 'next/navigation';
 import { etaMin, hhmm } from '@/lib/format';
 
 const Mapa = dynamic(() => import('@/components/Mapa'), { ssr: false });
@@ -13,14 +14,15 @@ const PASOS = [
 ];
 
 // Página pública que recibe el cliente para seguir su pedido
-export default function Seguir({ params }) {
+export default function Seguir() {
+  const { token } = useParams();
   const [d, setD] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let vivo = true;
     const cargar = async () => {
-      const res = await fetch('/api/seguir/' + params.token, { cache: 'no-store' });
+      const res = await fetch('/api/seguir/' + token, { cache: 'no-store' });
       if (!vivo) return;
       if (!res.ok) { setError('No encontramos este pedido'); return; }
       setD(await res.json());
@@ -28,7 +30,7 @@ export default function Seguir({ params }) {
     cargar();
     const iv = setInterval(cargar, 8000);
     return () => { vivo = false; clearInterval(iv); };
-  }, [params.token]);
+  }, [token]);
 
   if (error) return <div className="center"><div className="authbox"><h1>😕</h1><p>{error}</p></div></div>;
   if (!d) return <div className="center mute">Cargando tu pedido…</div>;
