@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useDatos, useToast } from '@/components/Datos';
 import { Header } from '@/components/UI';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, apiPost } from '@/lib/supabaseClient';
 import { bs } from '@/lib/format';
 import Probador from '@/components/Probador';
 
@@ -53,10 +53,11 @@ export default function Ajustes() {
     });
     ok(error, 'Repartidor agregado'); setR({ nombre: '', telefono: '', user_id: '' });
   }
-  async function cambiarRol(id, rol) {
-    const { error } = await supabase.from('profiles').update({ rol }).eq('id', id);
-    ok(error, 'Rol actualizado'); cargarUsuarios();
+  async function equipo(datos, msg) {
+    try { await apiPost('/api/equipo', datos); toast(msg); cargarUsuarios(); return true; }
+    catch (e) { toast('⚠️ ' + e.message); return false; }
   }
+  const cambiarRol = (id, rol) => equipo({ accion: 'rol', id, rol }, 'Rol actualizado');
 
   return (
     <>
@@ -116,7 +117,7 @@ export default function Ajustes() {
 
       {tab === 'repartidores' && (
         <div className="card" style={{ maxWidth: 760 }}>
-          <p className="mute" style={{ marginTop: 0 }}>Para que un repartidor use la app en su celular: que cree su cuenta en la pantalla de login, dale el rol <b>repartidor</b> en Usuarios y vincúlalo aquí.</p>
+          <p className="mute" style={{ marginTop: 0 }}>Para que un repartidor use la app en su celular, créalo en <b>Usuarios</b> con el rol <b>Repartidor</b>: aparece aquí automáticamente, ya vinculado.</p>
           <table>
             <thead><tr><th>Repartidor</th><th>Teléfono</th><th>Usuario vinculado</th><th className="r">Activo</th></tr></thead>
             <tbody>
@@ -147,23 +148,74 @@ export default function Ajustes() {
         </div>
       )}
 
-      {tab === 'usuarios' && (
-        <div className="card" style={{ maxWidth: 760 }}>
-          <p className="mute" style={{ marginTop: 0 }}>Cada persona crea su cuenta en la pantalla de login y aparece aquí como <b>pendiente</b>. Asígnale su rol: admin (todo), cajero (pedidos y caja), cocina (solo comandas), repartidor (app de entregas).</p>
-          <table>
-            <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th></tr></thead>
-            <tbody>
-              {usuarios.map(u => (
-                <tr key={u.id}>
-                  <td>{u.nombre}</td><td className="mute">{u.email}</td>
-                  <td><select className="inp" value={u.rol} onChange={e => cambiarRol(u.id, e.target.value)}>{ROLES.map(x => <option key={x}>{x}</option>)}</select></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {tab === 'usuarios' && <Equipo usuarios={usuarios} equipo={equipo} cambiarRol={cambiarRol} />}
       <Toasts />
     </>
+  );
+}
+
+const ETIQUETA = { admin: 'Administrador', cajero: 'Cajero/a', cocina: 'Cocina', repartidor: 'Repartidor', pendiente: 'Sin acceso' };
+const pinAlAzar = () => String(Math.floor(100000 + Math.random() * 900000));
+const telVisible = t => (t ? (t.startsWith('591') ? t.slice(3) : t) : '');
+
+function Equipo({ usuarios, equipo, cambiarRol }) {
+  const [n, setN] = useState({ nombre: '', telefono: '', pin: pinAlAzar(), rol: 'cajero' });
+  const [creado, setCreado] = useState(null);
+
+  async function crear() {
+    const ok = await equipo({ accion: 'crear', ...n }, 'Usuario creado');
+    if (ok) { setCreado({ ...n }); setN({ nombre: '', telefono: '', pin: pinAlAzar(), rol: n.rol }); }
+  }
+  async function nuevoPin(u) {
+    const pin = window.prompt('Nuevo PIN de 6 números para ' + u.nombre + ':', pinAlAzar());
+    if (pin) equipo({ accion: 'pin', id: u.id, pin }, 'PIN actualizado: ' + pin);
+  }
+
+  return (
+    <div className="grid" style={{ maxWidth: 820 }}>
+      <div className="card">
+        <h3>Agregar persona al equipo</h3>
+        <p className="mute" style={{ marginTop: 0 }}>Cada persona entra con <b>su celular y un PIN de 6 números</b>. Elige qué puede ver: <b>Cajero/a</b> (pedidos, caja, delivery y catálogo), <b>Cocina</b> (solo comandas), <b>Repartidor</b> (app de entregas) o <b>Administrador</b> (todo).</p>
+        <div className="formrow" style={{ gridTemplateColumns: '1.4fr 1.1fr 0.9fr 1fr auto' }}>
+          <div><label className="fl">Nombre</label><input className="inp" value={n.nombre} onChange={e => setN({ ...n, nombre: e.target.value })} placeholder="Ej. Carlos" /></div>
+          <div><label className="fl">Celular</label><input className="inp" inputMode="tel" value={n.telefono} onChange={e => setN({ ...n, telefono: e.target.value })} placeholder="70012345" /></div>
+          <div><label className="fl">PIN</label><input className="inp" inputMode="numeric" maxLength={6} value={n.pin} onChange={e => setN({ ...n, pin: e.target.value.replace(/\D/g, '') })} /></div>
+          <div><label className="fl">Rol</label>
+            <select className="inp" value={n.rol} onChange={e => setN({ ...n, rol: e.target.value })}>
+              {['cajero', 'cocina', 'repartidor', 'admin'].map(r => <option key={r} value={r}>{ETIQUETA[r]}</option>)}
+            </select></div>
+          <div><label className="fl">&nbsp;</label><button className="btn pri" onClick={crear}>Crear</button></div>
+        </div>
+        {creado && (
+          <div className="ok-msg" style={{ marginTop: 12 }}>
+            ✅ Listo. Mándale esto a <b>{creado.nombre}</b>:<br />
+            Entra a <b>{typeof window !== 'undefined' ? window.location.origin : ''}</b> con tu celular <b>{creado.telefono}</b> y el PIN <b>{creado.pin}</b>.
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <h3>Equipo</h3>
+        <table>
+          <thead><tr><th>Nombre</th><th>Acceso</th><th>Rol</th><th className="r">Activo</th><th></th></tr></thead>
+          <tbody>
+            {usuarios.map(u => (
+              <tr key={u.id} className={u.activo === false ? 'off' : ''}>
+                <td>{u.nombre}</td>
+                <td className="mute">{u.telefono ? '📱 ' + telVisible(u.telefono) : u.email}</td>
+                <td>
+                  <select className="inp" style={{ width: 140 }} value={u.rol} onChange={e => cambiarRol(u.id, e.target.value)}>
+                    {(u.rol === 'pendiente' ? ['pendiente'] : []).concat(['cajero', 'cocina', 'repartidor', 'admin']).map(r => <option key={r} value={r}>{ETIQUETA[r]}</option>)}
+                  </select>
+                </td>
+                <td className="r"><button className={'tgl' + (u.activo !== false ? ' on' : '')} aria-label="Activo"
+                  onClick={() => equipo({ accion: 'activo', id: u.id, activo: u.activo === false }, u.activo === false ? 'Usuario activado' : 'Usuario desactivado')} /></td>
+                <td className="r">{u.telefono && <button className="btn sm" onClick={() => nuevoPin(u)}>Cambiar PIN</button>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
