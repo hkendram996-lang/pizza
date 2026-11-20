@@ -1,0 +1,40 @@
+name: Mantenimiento
+
+# 1) Cada 2 días visita el sistema para que la base de datos gratuita de Supabase no se pause.
+# 2) Cada domingo descarga una copia de seguridad, la cifra y la guarda 90 días (Actions → Mantenimiento → Artifacts).
+on:
+  schedule:
+    - cron: '17 11 */2 * *'
+    - cron: '43 9 * * 0'
+  workflow_dispatch:
+
+env:
+  APP_URL: ${{ vars.APP_URL || 'https://manechi.vercel.app' }}
+
+jobs:
+  despertar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Visitar el chequeo de salud
+        run: curl -fsS --retry 3 --retry-delay 20 "$APP_URL/api/salud"
+
+  respaldo:
+    if: github.event.schedule == '43 9 * * 0' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar y cifrar la copia
+        env:
+          RESPALDO_TOKEN: ${{ secrets.RESPALDO_TOKEN }}
+          RESPALDO_CLAVE: ${{ secrets.RESPALDO_CLAVE }}
+        run: |
+          if [ -z "$RESPALDO_TOKEN" ] || [ -z "$RESPALDO_CLAVE" ]; then echo "Faltan los secretos RESPALDO_TOKEN y RESPALDO_CLAVE"; exit 0; fi
+          curl -fsS --retry 3 --retry-delay 20 -H "Authorization: Bearer $RESPALDO_TOKEN" "$APP_URL/api/respaldo" -o respaldo.json
+          test -s respaldo.json
+          openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:RESPALDO_CLAVE -in respaldo.json -out "respaldo-$(date +%F).json.enc"
+          rm respaldo.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-manechi
+          path: respaldo-*.json.enc
+          retention-days: 90
+        if: hashFiles('respaldo-*.json.enc') != ''
