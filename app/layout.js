@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Pizzería IA — Panel',
-  description: 'Pedidos, cocina, delivery, caja y finanzas con agente IA'
+  title: 'Manechi Pizzería · Panel',
+  description: 'Manechi Pizzería — pizzas salvajes 🐒🍕'
 };
 
 export const viewport = { width: 'device-width', initialScale: 1 };
