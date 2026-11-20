@@ -13,6 +13,7 @@ const ICONOS = {
   caja: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M7 7V4h10v3M3 12h18"/>',
   catalogo: '<path d="M4 5h7v14H4zM13 5h7v14h-7z"/>',
   finanzas: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  compartir: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3"/>',
   ajustes: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
 };
 
@@ -25,6 +26,7 @@ const MENU = [
   ['caja', 'Caja', ['admin', 'cajero']],
   ['catalogo', 'Catálogo', ['admin', 'cajero']],
   ['finanzas', 'Finanzas', ['admin']],
+  ['compartir', 'Menú y QR', ['admin', 'cajero']],
   ['ajustes', 'Ajustes', ['admin']]
 ];
 
