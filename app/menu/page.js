@@ -4,8 +4,8 @@ import MenuCliente from './MenuCliente';
 
 const display = Fraunces({ subsets: ['latin'], variable: '--f-display', display: 'swap' });
 
-// Página pública del menú: se actualiza sola cada minuto con lo que haya en el Catálogo
-export const revalidate = 60;
+// Página pública del menú: siempre muestra lo que haya en el Catálogo en este momento
+export const dynamic = 'force-dynamic';
 
 const URL_APP = (process.env.NEXT_PUBLIC_APP_URL || 'https://manechi.vercel.app').replace(/\/$/, '');
 
