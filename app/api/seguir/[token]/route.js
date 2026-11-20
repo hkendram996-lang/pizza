@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 // Datos públicos y mínimos para la página de seguimiento del cliente
 export async function GET(_req, { params }) {
-  const token = params.token;
+  const { token } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(token || '')) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
   const db = admin();
   const { data: o } = await db.from('orders')
