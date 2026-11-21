@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  APP_URL: ${{ vars.APP_URL || 'https://manechi.vercel.app' }}
+  APP_URL: ${{ vars.APP_URL || 'https://pizzeria.manechi.workers.dev' }}
 
 jobs:
   despertar:
