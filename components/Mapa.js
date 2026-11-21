@@ -4,9 +4,9 @@ import 'leaflet/dist/leaflet.css';
 
 // Estilo del mapa: CARTO Voyager si hay clave (más limpio), si no OpenStreetMap estándar
 const CARTO_KEY = process.env.NEXT_PUBLIC_CARTO_KEY;
-const CAPA = CARTO_KEY
+const CAPA = true || CARTO_KEY
   ? {
-      url: `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_KEY}`,
+      url: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
       opts: {
         maxZoom: 20, maxNativeZoom: 18,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attribution/">CARTO</a>'
