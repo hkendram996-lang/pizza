@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "pizza",
+  "name": "pizzeria",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-11-20",
   "compatibility_flags": ["nodejs_compat"],
@@ -12,3 +12,4 @@
     "enabled": true
   }
 }
+
