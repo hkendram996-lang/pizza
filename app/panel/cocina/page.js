@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useDatos, useReloj, useToast } from '@/components/Datos';
 import { Header } from '@/components/UI';
 import { accion } from '@/lib/supabaseClient';
-import { since, minutos, etaLocal, enLocal, faltaMin } from '@/lib/format';
+import { since, minutos, etaLocal, enLocal, faltaMin, extrasTxt } from '@/lib/format';
 import { alerta, desbloquear } from '@/lib/sonido';
 
 export default function Cocina() {
@@ -69,13 +69,13 @@ export default function Cocina() {
                 )}
                 <ul>
                   {(o.order_items || []).map(i => (
-                    <li key={i.id}><b>{i.cantidad}×</b> {i.nombre}{i.nota && <div style={{ color: 'var(--red)', fontSize: 13 }}>⚠ {i.nota}</div>}</li>
+                    <li key={i.id}><b>{i.cantidad}×</b> {i.nombre}{extrasTxt(i) && <span className="ext">+ {extrasTxt(i)}</span>}{i.nota && <div style={{ color: 'var(--red)', fontSize: 13 }}>⚠ {i.nota}</div>}</li>
                   ))}
                   {o.nota && <li style={{ color: 'var(--amber)', fontSize: 13 }}>📝 {o.nota}</li>}
                 </ul>
                 {lineaRider(o)}
                 <div className="tf">
-                  <span className="mute">{o.tipo === 'delivery' ? '🛵 Delivery' : '🏠 Mostrador'} · {o.canal}</span>
+                  <span className="mute">{o.tipo === 'delivery' ? '🛵 Delivery' : o.canal === 'Salón' ? '🌿 Salón' + (o.mesa ? ' · Mesa ' + o.mesa : '') : o.canal === 'Para llevar' ? '🥡 Para llevar' : '🏠 ' + o.canal}{o.tipo === 'delivery' ? ' · ' + o.canal : ''}</span>
                   <div className="row" style={{ gap: 6 }}>
                     <button className="btn sm" title="Avisar que tarda 5 minutos más" onClick={() => demora(o.id)}>+5 min</button>
                     <button className="btn ok" onClick={() => listo(o)}>✓ Listo</button>

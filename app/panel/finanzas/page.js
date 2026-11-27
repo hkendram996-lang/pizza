@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useDatos, useToast } from '@/components/Datos';
-import { Header, Kpi } from '@/components/UI';
+import { Header, Kpi, Canal } from '@/components/UI';
 import { supabase } from '@/lib/supabaseClient';
 import { bs } from '@/lib/format';
 
@@ -12,6 +12,7 @@ export default function Finanzas() {
   const { toast, Toasts } = useToast();
   const [ped, setPed] = useState([]);
   const [gastos, setGastos] = useState([]);
+  const [periodo, setPeriodo] = useState('hoy');
   const [g, setG] = useState({ categoria: 'Alquiler', descripcion: '', monto: '', fecha: new Date().toISOString().slice(0, 10) });
 
   const ini30 = new Date(); ini30.setHours(0, 0, 0, 0); ini30.setDate(ini30.getDate() - 29);
@@ -46,9 +47,17 @@ export default function Finanzas() {
   }
   const dmax = Math.max(1, ...dias.map(x => x.v));
 
+  // Ventas por origen del pedido, en el período elegido
+  const ini7 = new Date(hoyIni); ini7.setDate(ini7.getDate() - 6);
+  const delPeriodo = periodo === 'hoy' ? hoy : periodo === '7d' ? ped.filter(o => new Date(o.created_at) >= ini7) : ped.filter(o => new Date(o.created_at) >= iniMes);
   const canal = {};
-  hoy.forEach(o => { canal[o.canal] = (canal[o.canal] || 0) + Number(o.total); });
-  const cmax = Math.max(1, ...Object.values(canal));
+  delPeriodo.forEach(o => {
+    const k = o.canal || 'Otros';
+    canal[k] = canal[k] || { n: 0, v: 0, c: 0 };
+    canal[k].n += 1; canal[k].v += Number(o.total); canal[k].c += comDe(o);
+  });
+  const totalPeriodo = sum(delPeriodo, o => Number(o.total));
+  const cmax = Math.max(1, ...Object.values(canal).map(x => x.v));
 
   const prod = {};
   ped.filter(o => new Date(o.created_at) >= iniMes).forEach(o => (o.order_items || []).forEach(i => {
@@ -102,10 +111,33 @@ export default function Finanzas() {
           </div>
         </div>
         <div className="card">
-          <h3>Ventas por canal (hoy)</h3>
-          {Object.keys(canal).length ? Object.entries(canal).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
-            <div key={k} className="hbar"><span>{k}</span><div className="tr"><div style={{ width: (v / cmax) * 100 + '%' }} /></div><span style={{ textAlign: 'right' }}>{bs(v)}</span></div>
-          )) : <div className="empty">Sin ventas hoy</div>}
+          <h3>
+            Ventas por origen
+            <span className="seg">
+              {[['hoy', 'Hoy'], ['7d', '7 días'], ['mes', 'Mes']].map(([k, l]) => <button key={k} className={periodo === k ? 'on' : ''} onClick={() => setPeriodo(k)}>{l}</button>)}
+            </span>
+          </h3>
+          {Object.keys(canal).length ? (
+            <>
+              {Object.entries(canal).sort((a, b) => b[1].v - a[1].v).map(([k, x]) => (
+                <div key={k} className="hbar"><span>{k}</span><div className="tr"><div style={{ width: (x.v / cmax) * 100 + '%' }} /></div><span style={{ textAlign: 'right' }}>{bs(x.v)}</span></div>
+              ))}
+              <table style={{ marginTop: 10 }}>
+                <thead><tr><th>Origen</th><th className="r">Pedidos</th><th className="r">Ticket prom.</th><th className="r">% ventas</th><th className="r">Comisión</th></tr></thead>
+                <tbody>
+                  {Object.entries(canal).sort((a, b) => b[1].v - a[1].v).map(([k, x]) => (
+                    <tr key={k}>
+                      <td><Canal c={k} /></td>
+                      <td className="r">{x.n}</td>
+                      <td className="r">{bs(x.v / x.n)}</td>
+                      <td className="r">{totalPeriodo ? Math.round((x.v / totalPeriodo) * 100) : 0}%</td>
+                      <td className="r">{x.c ? <span className="down">−{bs(x.c)}</span> : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          ) : <div className="empty">Sin ventas en este período</div>}
         </div>
       </div>
 

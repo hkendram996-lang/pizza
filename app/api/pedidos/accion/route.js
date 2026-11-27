@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { admin, requireStaff } from '@/lib/supabaseAdmin';
 import { notificarPedido } from '@/lib/notificar';
+import { ORIGENES_LOCAL } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,11 +82,13 @@ export async function POST(req) {
         return NextResponse.json({ ok: true });
       }
       case 'crear_mostrador': {
-        const items = (body.items || []).map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad }));
+        const items = limpiarItems(body.items);
+        const canal = ORIGENES_LOCAL.includes(body.canal) ? body.canal : 'Mostrador';
         const { data: o, error } = await db.rpc('crear_pedido', {
           p: {
-            canal: 'Mostrador', tipo: 'mostrador', estado: 'cocina',
-            cliente_nombre: body.cliente_nombre || 'Cliente mostrador',
+            canal, tipo: 'mostrador', estado: 'cocina',
+            mesa: canal === 'Salón' && body.mesa ? String(body.mesa).slice(0, 20) : null,
+            cliente_nombre: body.cliente_nombre || (canal === 'Salón' && body.mesa ? 'Mesa ' + body.mesa : 'Cliente ' + canal.toLowerCase()),
             metodo_pago: body.metodo_pago || 'Efectivo', items, nota: body.nota || null
           }
         });
@@ -95,7 +98,7 @@ export async function POST(req) {
       }
       case 'crear_manual': {
         // Pedido cargado a mano (teléfono, PedidosYa, etc.)
-        const items = (body.items || []).map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad }));
+        const items = limpiarItems(body.items);
         const { data: o, error } = await db.rpc('crear_pedido', {
           p: {
             canal: body.canal || 'Teléfono', tipo: body.tipo || 'delivery', estado: 'nuevo',
@@ -163,6 +166,16 @@ export async function POST(req) {
     console.error(e);
     return err(e.message || 'Error interno', 500);
   }
+}
+
+// Solo se aceptan id de producto, cantidad, id de extras y nota (los precios los calcula la base)
+function limpiarItems(lista) {
+  return (Array.isArray(lista) ? lista : []).map(i => ({
+    producto_id: i.producto_id,
+    cantidad: i.cantidad,
+    extras: Array.isArray(i.extras) ? i.extras.map(Number).filter(Number.isInteger) : [],
+    nota: i.nota ? String(i.nota).slice(0, 200) : null
+  }));
 }
 
 async function sesionAbierta() {

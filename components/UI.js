@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { hhmm } from '@/lib/format';
+import { hhmm, claseCanal } from '@/lib/format';
 
 export function Header({ titulo, sub, children }) {
   const [hora, setHora] = useState('');
@@ -30,7 +30,7 @@ export const Kpi = ({ l, v, d }) => (
   </div>
 );
 
-export const Canal = ({ c }) => <span className={'chip c-' + c}>{c}</span>;
+export const Canal = ({ c }) => <span className={'chip c-' + claseCanal(c)}>{c}</span>;
 
 export function Modal({ titulo, children, onClose }) {
   return (

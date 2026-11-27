@@ -68,7 +68,9 @@ main{padding:22px 26px 40px;min-width:0}
 .c-Instagram{background:#fbe6f1;color:#b2306f}
 .c-PedidosYa{background:#fde4e4;color:#c4232b}
 .c-Mostrador{background:#eee9e2;color:#5d544c}
-.c-Teléfono{background:var(--violet2);color:var(--violet)}
+.c-Teléfono,.c-Telefono{background:var(--violet2);color:var(--violet)}
+.c-Salon{background:#e3f0e4;color:#2f6b3a}
+.c-Para-llevar{background:#fff0d6;color:#9a5b00}
 .ia{background:#211b17;color:#fff}
 .pay{background:#f1ece5;color:#5d544c}
 
@@ -279,4 +281,31 @@ main,aside{min-width:0}
   .toasts{left:12px;right:12px;bottom:calc(86px + env(safe-area-inset-bottom))}
   .toast{max-width:none}
   .rider-app{padding:12px}
+}
+
+/* ---------- Modificadores ---------- */
+.modal .box{max-height:90vh;overflow:auto}
+.modal .box.ancho{width:min(560px,94vw)}
+.mods h4{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}
+.mods .opc{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer;background:#fff}
+.mods .opc.on{border-color:var(--ink);background:var(--bg,#f6f3ef)}
+.mods .opc input{width:18px;height:18px}
+.mods .opc span{flex:1}
+.ext{display:block;font-size:12px;color:var(--mute);margin-top:2px}
+.tk .ext{font-size:14px;color:var(--red);font-weight:600}
+.origen{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 0 10px}
+.origen button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 0;font-size:13px}
+.origen button.on{border-color:var(--red);background:var(--red);color:#fff}
+.conteo{display:grid;grid-template-columns:1fr 90px 90px;gap:6px;align-items:center;font-size:14px}
+.conteo input{text-align:right}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;margin-left:auto}
+.seg button{border:0;background:#fff;padding:4px 11px;font-size:12.5px}
+.seg button.on{background:var(--ink);color:#fff}
+
+/* ---------- Imprimir el cierre de caja ---------- */
+@media print{
+  body *{visibility:hidden}
+  .imprimible,.imprimible *{visibility:visible}
+  .imprimible{position:absolute;left:0;top:0;width:100%;max-height:none;overflow:visible}
+  .no-imprimir{display:none !important}
 }

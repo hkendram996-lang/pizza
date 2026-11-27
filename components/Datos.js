@@ -11,7 +11,7 @@ export const useDatos = () => useContext(Ctx);
  */
 export function DatosProvider({ perfil, children }) {
   const [d, setD] = useState({
-    cargando: true, orders: [], products: [], riders: [], zones: [], settings: null,
+    cargando: true, orders: [], products: [], modifiers: [], riders: [], zones: [], settings: null,
     caja: null, movs: [], escalados: []
   });
   const timers = useRef({});
@@ -28,6 +28,10 @@ export function DatosProvider({ perfil, children }) {
     if (k === 'products') {
       const { data } = await supabase.from('products').select('*').order('orden').order('id');
       set('products', data || []);
+    }
+    if (k === 'modifiers') {
+      const { data } = await supabase.from('modifiers').select('*').order('orden').order('id');
+      set('modifiers', data || []); // si la tabla aún no existe, queda vacío y todo sigue funcionando
     }
     if (k === 'riders') {
       const { data } = await supabase.from('riders').select('*').order('id');
@@ -46,7 +50,7 @@ export function DatosProvider({ perfil, children }) {
         .order('abierta_at', { ascending: false }).limit(1).maybeSingle();
       let movs = [];
       if (s) {
-        const r = await supabase.from('cash_movements').select('*').eq('session_id', s.id).order('created_at', { ascending: false });
+        const r = await supabase.from('cash_movements').select('*, orders(canal)').eq('session_id', s.id).order('created_at', { ascending: false });
         movs = r.data || [];
       }
       setD(prev => ({ ...prev, caja: s, movs }));
@@ -64,11 +68,11 @@ export function DatosProvider({ perfil, children }) {
 
   useEffect(() => {
     if (!perfil) return;
-    const claves = ['orders', 'products', 'riders', 'zones', 'settings', 'caja', 'customers'];
+    const claves = ['orders', 'products', 'modifiers', 'riders', 'zones', 'settings', 'caja', 'customers'];
     Promise.all(claves.map(cargar)).then(() => set('cargando', false));
 
     const mapa = {
-      orders: 'orders', order_items: 'orders', products: 'products', riders: 'riders', zones: 'zones',
+      orders: 'orders', order_items: 'orders', products: 'products', modifiers: 'modifiers', riders: 'riders', zones: 'zones',
       settings: 'settings', cash_sessions: 'caja', cash_movements: 'caja', customers: 'customers'
     };
     let canal = supabase.channel('panel');

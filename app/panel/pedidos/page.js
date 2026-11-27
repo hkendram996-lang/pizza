@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react';
 import { useDatos, useReloj, useToast } from '@/components/Datos';
 import { Header, Canal, Modal } from '@/components/UI';
 import Chat from '@/components/Chat';
+import { ElegirExtras, extrasPara, claveLinea, precioLinea, nombresExtras } from '@/components/Extras';
 import { accion, supabase } from '@/lib/supabaseClient';
-import { bs, since, itemsTxt, ESTADOS, minutos, etaMin, leerUbicacion } from '@/lib/format';
+import { bs, since, itemsTxt, extrasTxt, ESTADOS, minutos, etaMin, leerUbicacion } from '@/lib/format';
 
 export default function Pedidos() {
   useReloj();
-  const { orders, riders, escalados, products } = useDatos();
+  const { orders, riders, escalados, products, modifiers } = useDatos();
   const [sel, setSel] = useState(null);
   const [telChat, setTelChat] = useState(null);
   const [nuevo, setNuevo] = useState(false);
@@ -58,7 +59,7 @@ export default function Pedidos() {
           {o.ia && <span className="chip ia">IA</span>}
           <span className="chip pay">{o.metodo_pago}{o.pagado ? ' ✓' : ''}</span>
         </div>
-        <div className="who">{o.cliente_nombre}</div>
+        <div className="who">{o.cliente_nombre}{o.mesa ? ' · Mesa ' + o.mesa : ''}</div>
         <div className="it">{itemsTxt(o)}{o.nota && <><br /><b style={{ color: 'var(--amber)' }}>{o.nota}</b></>}</div>
         <div className="f"><span className="tot">{bs(o.total)}</span>{act}</div>
       </div>
@@ -101,7 +102,7 @@ export default function Pedidos() {
           {tel && <><h3 style={{ marginTop: 18 }}>💬 WhatsApp</h3><Chat telefono={tel} cliente={cliente} /></>}
         </div>
       </div>
-      {nuevo && <NuevoPedido productos={products.filter(p => p.activo)} cerrar={() => setNuevo(false)} toast={toast} />}
+      {nuevo && <NuevoPedido productos={products.filter(p => p.activo)} modifiers={modifiers} cerrar={() => setNuevo(false)} toast={toast} />}
       <Toasts />
     </>
   );
@@ -112,11 +113,12 @@ function Detalle({ o, hacer }) {
     <>
       <h3>Pedido #{o.id} <Canal c={o.canal} /></h3>
       <div className="sumrow"><span className="mute">Cliente</span><b>{o.cliente_nombre}</b></div>
+      {o.mesa && <div className="sumrow"><span className="mute">Mesa</span><b>{o.mesa}</b></div>}
       {o.telefono && <div className="sumrow"><span className="mute">Teléfono</span><span>+{o.telefono}</span></div>}
       {o.direccion && <div className="sumrow"><span className="mute">Dirección</span><span style={{ textAlign: 'right' }}>{o.direccion}</span></div>}
       {o.lat != null && <div className="sumrow"><span className="mute">Mapa</span><a href={`https://www.google.com/maps?q=${o.lat},${o.lng}`} target="_blank" rel="noreferrer">Ver ubicación ↗</a></div>}
       {(o.order_items || []).map(i => (
-        <div key={i.id} className="sumrow"><span>{i.cantidad}× {i.nombre}{i.nota ? <em className="mute"> ({i.nota})</em> : null}</span><span>{bs(i.precio * i.cantidad)}</span></div>
+        <div key={i.id} className="sumrow"><span>{i.cantidad}× {i.nombre}{extrasTxt(i) ? <span className="ext">+ {extrasTxt(i)}</span> : null}{i.nota ? <em className="mute"> ({i.nota})</em> : null}</span><span>{bs(i.precio * i.cantidad)}</span></div>
       ))}
       {Number(o.envio) > 0 && <div className="sumrow"><span>Envío</span><span>{bs(o.envio)}</span></div>}
       <div className="bigtot" style={{ fontSize: 17 }}><span>Total</span><span>{bs(o.total)}</span></div>
@@ -130,12 +132,18 @@ function Detalle({ o, hacer }) {
   );
 }
 
-function NuevoPedido({ productos, cerrar, toast }) {
+function NuevoPedido({ productos, modifiers, cerrar, toast }) {
   const [f, setF] = useState({ canal: 'Teléfono', tipo: 'delivery', cliente_nombre: '', telefono: '', direccion: '', ubic: '', metodo_pago: 'Efectivo', nota: '' });
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
-  const sub = items.reduce((s, i) => s + productos.find(p => p.id === i.producto_id).precio * i.cantidad, 0);
-  const add = id => setItems(l => l.find(i => i.producto_id === id) ? l.map(i => i.producto_id === id ? { ...i, cantidad: i.cantidad + 1 } : i) : [...l, { producto_id: id, cantidad: 1 }]);
+  const [elegir, setElegir] = useState(null);
+  const pr = id => productos.find(p => p.id === id);
+  const sub = items.reduce((s, i) => s + precioLinea(pr(i.producto_id), i.extras, modifiers) * i.cantidad, 0);
+  const sumar = (id, extras = [], nota = '') => {
+    const k = claveLinea(id, extras, nota);
+    setItems(l => l.find(i => i.k === k) ? l.map(i => i.k === k ? { ...i, cantidad: i.cantidad + 1 } : i) : [...l, { k, producto_id: id, cantidad: 1, extras, nota }]);
+  };
+  const add = id => { const p = pr(id); if (extrasPara(p, modifiers).length) setElegir(p); else sumar(id); };
   const set = (k, v) => setF(x => ({ ...x, [k]: v }));
 
   async function guardar() {
@@ -145,7 +153,10 @@ function NuevoPedido({ productos, cerrar, toast }) {
     if (!items.length) return setError('Agrega al menos un producto');
     if (f.tipo === 'delivery' && !u) return setError('Para delivery pega la ubicación (link de Google Maps o "lat, lng")');
     try {
-      const r = await accion('crear_manual', { ...f, ...(u || {}), metodo_pago: f.canal === 'PedidosYa' ? 'App' : f.metodo_pago, items });
+      const r = await accion('crear_manual', {
+        ...f, ...(u || {}), metodo_pago: f.canal === 'PedidosYa' ? 'App' : f.metodo_pago,
+        items: items.map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad, extras: i.extras, nota: i.nota }))
+      });
       toast('Pedido #' + r.pedido.id + ' creado');
       cerrar();
     } catch (e) { setError(e.message); }
@@ -174,8 +185,8 @@ function NuevoPedido({ productos, cerrar, toast }) {
       </select>
       <div style={{ margin: '8px 0' }}>
         {items.map(i => {
-          const p = productos.find(x => x.id === i.producto_id);
-          return <div key={i.producto_id} className="sumrow"><span>{i.cantidad}× {p.nombre}</span><span>{bs(p.precio * i.cantidad)} <button className="btn sm" onClick={() => setItems(l => l.filter(x => x !== i))}>✕</button></span></div>;
+          const p = pr(i.producto_id);
+          return <div key={i.k} className="sumrow"><span>{i.cantidad}× {p.nombre}{i.extras.length > 0 && <span className="ext">+ {nombresExtras(i.extras, modifiers)}</span>}{i.nota && <span className="ext">📝 {i.nota}</span>}</span><span>{bs(precioLinea(p, i.extras, modifiers) * i.cantidad)} <button className="btn sm" onClick={() => setItems(l => l.filter(x => x !== i))}>✕</button></span></div>;
         })}
       </div>
       {f.canal !== 'PedidosYa' && (
@@ -188,6 +199,10 @@ function NuevoPedido({ productos, cerrar, toast }) {
         <button className="btn" onClick={cerrar}>Cancelar</button>
         <button className="btn pri" onClick={guardar}>Crear pedido</button>
       </div>
+      {elegir && (
+        <ElegirExtras producto={elegir} modifiers={modifiers} onClose={() => setElegir(null)}
+          onOk={({ extras, nota }) => { sumar(elegir.id, extras, nota); setElegir(null); }} />
+      )}
     </Modal>
   );
 }

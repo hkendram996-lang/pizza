@@ -402,3 +402,6 @@ begin
     end;
   end loop;
 end $$;
+
+
+-- Las mejoras posteriores están en supabase/mejoras-01.sql (ejecútalo después de este archivo y de seed.sql)

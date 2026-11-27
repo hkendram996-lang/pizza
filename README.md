@@ -32,6 +32,7 @@ Y en tu computadora: **Node.js 20 o más nuevo** (https://nodejs.org, botón "LT
 2. Cuando termine de crearse, ve a **SQL Editor → New query**.
 3. Abre el archivo `supabase/schema.sql` de esta carpeta, copia **todo**, pégalo y presiona **Run**. Debe decir "Success".
 4. Nueva query: copia y ejecuta `supabase/seed.sql` (menú y zonas de ejemplo). Hazlo **una sola vez**.
+   Luego otra query con `supabase/mejoras-01.sql` (origen del pedido, modificadores y cierre de caja). Este se puede ejecutar más de una vez.
 5. Ve a **Authentication → Sign In / Providers → Email** y desactiva **Confirm email** (así tu equipo entra sin confirmar el correo).
 6. Ve a **Project Settings → API** y copia:
    - `Project URL`
@@ -151,6 +152,12 @@ Para cambiar cómo habla el agente sin tocar código: **Ajustes → Instruccione
 - **El agente no responde en WhatsApp** → en Vercel → tu proyecto → **Logs**, busca errores de `/api/whatsapp`. Revisa el token (el temporal dura 24 h).
 - **El mapa no muestra repartidores** → el repartidor debe tocar "Estoy disponible" y permitir la ubicación en el celular.
 - **No me deja entrar ("Cuenta pendiente")** → el admin debe asignarte un rol.
+
+## 🆕 Mejoras 01 (noviembre 2026)
+
+- **Origen del pedido**: en Caja eliges Mostrador, Salón (con número de mesa) o Para llevar. Finanzas muestra ventas, pedidos, ticket promedio y comisión por origen (hoy, 7 días o mes).
+- **Modificadores**: borde, extras y "sin…" con precio, en Catálogo → Modificadores. Se eligen al tocar un producto en Caja o en Pedido manual, el agente IA los ofrece y cocina los ve en rojo.
+- **Cierre de caja**: conteo por billetes y monedas, comparación de QR y tarjeta con el banco, ventas por origen, aviso de pedidos sin cobrar, observaciones, impresión e historial de cierres.
 
 ## 🚀 Próximas mejoras sugeridas
 
