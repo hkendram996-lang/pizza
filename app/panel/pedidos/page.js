@@ -42,12 +42,12 @@ export default function Pedidos() {
     if (o.estado === 'nuevo') act = (
       <button className="btn sm pri" onClick={e => {
         e.stopPropagation();
-        const pagado = o.metodo_pago !== 'Efectivo' && o.tipo === 'delivery' ? window.confirm('¿Ya verificaste el pago por ' + o.metodo_pago + '? (Aceptar = sí, cobrado)') : o.tipo === 'mostrador';
+        const pagado = o.mesa ? false : o.metodo_pago !== 'Efectivo' && o.tipo === 'delivery' ? window.confirm('¿Ya verificaste el pago por ' + o.metodo_pago + '? (Aceptar = sí, cobrado)') : o.tipo === 'mostrador';
         hacer('cocina', o.id, { pagado });
       }}>A cocina</button>
     );
     else if (o.estado === 'cocina') act = <button className="btn sm" onClick={e => { e.stopPropagation(); hacer('listo', o.id); }}>Listo</button>;
-    else if (o.estado === 'listo' && o.canal === 'Salón' && !o.pagado) act = <button className="btn sm ok" onClick={e => { e.stopPropagation(); hacer('servir', o.id); }}>Servido</button>;
+    else if (o.estado === 'listo' && o.mesa && !o.pagado) act = <button className="btn sm ok" onClick={e => { e.stopPropagation(); hacer('servir', o.id); }}>Servido</button>;
     else if (o.estado === 'listo' && o.tipo === 'mostrador') act = <button className="btn sm ok" onClick={e => { e.stopPropagation(); hacer('entregar', o.id); }}>Entregar</button>;
     else if (o.estado === 'listo') act = <span className="since">Esperando repartidor</span>;
     else if (o.estado === 'camino') act = <span className="since">🛵 {r ? r.nombre : ''}{r && etaMin(r, o) ? ' · ~' + etaMin(r, o) + ' min' : ''}</span>;

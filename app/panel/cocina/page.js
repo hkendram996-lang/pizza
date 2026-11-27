@@ -75,7 +75,7 @@ export default function Cocina() {
                 </ul>
                 {lineaRider(o)}
                 <div className="tf">
-                  <span className="mute">{o.tipo === 'delivery' ? '🛵 Delivery' : o.canal === 'Salón' ? '🌿 Salón' + (o.mesa ? ' · Mesa ' + o.mesa : '') : o.canal === 'Para llevar' ? '🥡 Para llevar' : '🏠 ' + o.canal}{o.tipo === 'delivery' ? ' · ' + o.canal : ''}</span>
+                  <span className="mute">{o.tipo === 'delivery' ? '🛵 Delivery' : o.mesa ? '🌿 Mesa ' + o.mesa + (o.canal !== 'Salón' ? ' · ' + o.canal : '') : o.canal === 'Para llevar' ? '🥡 Para llevar' : '🏠 ' + o.canal}{o.tipo === 'delivery' ? ' · ' + o.canal : ''}</span>
                   <div className="row" style={{ gap: 6 }}>
                     <button className="btn sm" title="Avisar que tarda 5 minutos más" onClick={() => demora(o.id)}>+5 min</button>
                     <button className="btn ok" onClick={() => listo(o)}>✓ Listo</button>

@@ -55,7 +55,7 @@ export default function Caja() {
 
   // Cuentas abiertas del salón (pedidos que cargó el mozo y todavía no se cobraron)
   const mesasMap = {};
-  orders.filter(o => o.canal === 'Salón' && o.mesa && !o.pagado && o.estado !== 'cancelado').forEach(o => {
+  orders.filter(o => o.mesa && !o.pagado && o.estado !== 'cancelado').forEach(o => {
     mesasMap[o.mesa] = mesasMap[o.mesa] || { mesa: o.mesa, n: 0, total: 0, mozo: o.mozo };
     mesasMap[o.mesa].n += 1; mesasMap[o.mesa].total += Number(o.total);
   });

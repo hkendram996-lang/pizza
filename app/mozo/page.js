@@ -25,7 +25,7 @@ export default function Mozo() {
   const cargar = useCallback(async () => {
     const desde = new Date(); desde.setHours(0, 0, 0, 0);
     const [{ data: o }, { data: p }, { data: m }] = await Promise.all([
-      supabase.from('orders').select('*, order_items(*)').eq('canal', 'Salón').neq('estado', 'cancelado')
+      supabase.from('orders').select('*, order_items(*)').not('mesa', 'is', null).neq('estado', 'cancelado')
         .or(`pagado.eq.false,created_at.gte."${desde.toISOString()}"`).order('created_at').limit(300),
       supabase.from('products').select('*').eq('activo', true).order('orden').order('id'),
       supabase.from('modifiers').select('*').eq('activo', true).order('orden').order('id')
@@ -59,12 +59,21 @@ export default function Mozo() {
   const mesas = {};
   abiertos.forEach(o => {
     const k = o.mesa || '?';
-    mesas[k] = mesas[k] || { mesa: k, pedidos: [], total: 0, listos: 0, cocina: 0, desde: o.created_at };
+    mesas[k] = mesas[k] || { mesa: k, pedidos: [], total: 0, listos: 0, cocina: 0, qr: 0, desde: o.created_at };
+    if (o.estado === 'nuevo') mesas[k].qr++;
     mesas[k].pedidos.push(o); mesas[k].total += Number(o.total);
     if (o.estado === 'listo') mesas[k].listos++;
-    if (o.estado === 'cocina' || o.estado === 'nuevo') mesas[k].cocina++;
+    if (o.estado === 'cocina') mesas[k].cocina++;
   });
   const lista = Object.values(mesas).sort((a, b) => String(a.mesa).localeCompare(String(b.mesa), 'es', { numeric: true }));
+
+  // Sonido fuerte cuando llega un pedido por el QR de una mesa (hay que confirmarlo)
+  const qrs = useRef(null);
+  useEffect(() => {
+    const ids = new Set(orders.filter(o => o.estado === 'nuevo').map(o => o.id));
+    if (qrs.current && [...ids].some(id => !qrs.current.has(id))) { alerta('nuevo'); avisar('📲 Llegó un pedido por QR: confírmalo'); }
+    qrs.current = ids;
+  }, [orders]);
 
   // Sonido y vibración cuando un pedido del salón sale de cocina
   useEffect(() => {
@@ -103,11 +112,11 @@ export default function Mozo() {
       {lista.length ? (
         <div className="mz-mesas">
           {lista.map(m => (
-            <button key={m.mesa} className={'mz-mesa' + (m.listos ? ' listo' : '')} onClick={() => setMesa(m.mesa)}>
+            <button key={m.mesa} className={'mz-mesa' + (m.qr ? ' qr' : m.listos ? ' listo' : '')} onClick={() => setMesa(m.mesa)}>
               <b>Mesa {m.mesa}</b>
               <span>{bs(m.total)}</span>
               <small>
-                {m.listos ? '🍕 ' + m.listos + ' para servir' : m.cocina ? '🔥 ' + m.cocina + ' en cocina' : '✓ Servida'}
+                {m.qr ? '📲 ' + m.qr + ' pedido QR por confirmar' : m.listos ? '🍕 ' + m.listos + ' para servir' : m.cocina ? '🔥 ' + m.cocina + ' en cocina' : '✓ Servida'}
                 {' · '}{since(m.desde)}
               </small>
             </button>
@@ -155,6 +164,13 @@ function Mesa({ numero, info, products, modifiers, perfil, volver, avisar, aviso
       setCart([]); setNota(''); setVista('cuenta');
     } catch (e) { avisar('⚠️ ' + e.message); }
     setEnviando(false);
+  }
+  async function confirmar(id) {
+    try { await accion('cocina', { orderId: id, pagado: false }); avisar('✓ Pedido #' + id + ' enviado a cocina'); } catch (e) { avisar('⚠️ ' + e.message); }
+  }
+  async function rechazar(id) {
+    if (!window.confirm('¿Rechazar el pedido #' + id + '? Se le avisa al cliente por WhatsApp.')) return;
+    try { await accion('cancelar', { orderId: id }); } catch (e) { avisar('⚠️ ' + e.message); }
   }
   async function servir(id) {
     try { await accion('servir', { orderId: id }); } catch (e) { avisar('⚠️ ' + e.message); }
@@ -217,9 +233,15 @@ function Mesa({ numero, info, products, modifiers, perfil, volver, avisar, aviso
             <div key={o.id} className="card" style={{ marginBottom: 10 }}>
               <h3>
                 Pedido #{o.id}
-                <span className="mute" style={{ fontSize: 12 }}>{since(o.created_at)}</span>
+                <span className="mute" style={{ fontSize: 12 }}>{o.canal === 'QR mesa' ? '📲 QR · ' : ''}{since(o.created_at)}</span>
                 <span style={{ marginLeft: 'auto' }}>
-                  {o.estado === 'listo' ? <button className="btn sm ok" onClick={() => servir(o.id)}>Servido ✓</button>
+                  {o.estado === 'nuevo' ? (
+                    <span className="row" style={{ gap: 6 }}>
+                      <button className="btn sm" onClick={() => rechazar(o.id)}>Rechazar</button>
+                      <button className="btn sm pri" onClick={() => confirmar(o.id)}>Confirmar → cocina</button>
+                    </span>
+                  )
+                    : o.estado === 'listo' ? <button className="btn sm ok" onClick={() => servir(o.id)}>Servido ✓</button>
                     : o.estado === 'entregado' ? <span className="chip" style={{ background: 'var(--green2)', color: 'var(--green)' }}>Servido</span>
                       : <span className="chip" style={{ background: 'var(--amber2)', color: 'var(--amber)' }}>En cocina</span>}
                 </span>

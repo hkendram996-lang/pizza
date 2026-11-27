@@ -69,7 +69,9 @@ export async function POST(req) {
       case 'cancelar': {
         const { data: o } = await db.from('orders').select('*').eq('id', orderId).single();
         if (!o) return err('Pedido no encontrado', 404);
-        if (staff.rol !== 'admin' && staff.rol !== 'cajero') return err('Solo caja o administración puede cancelar', 403);
+        // El mozo solo puede rechazar pedidos de mesa que todavía no entraron a cocina (ej. un QR por error)
+        const mozoPuede = staff.rol === 'mozo' && o.mesa && o.estado === 'nuevo';
+        if (staff.rol !== 'admin' && staff.rol !== 'cajero' && !mozoPuede) return err('Solo caja o administración puede cancelar', 403);
         await db.from('orders').update({ estado: 'cancelado' }).eq('id', orderId);
         if (o.rider_id) await db.rpc('liberar_si_vacio', { p_rider: o.rider_id });
         if (o.pagado)
@@ -100,7 +102,7 @@ export async function POST(req) {
       case 'servir': {
         // Pedido del salón entregado en la mesa: NO se cobra aquí, se cobra con la cuenta
         const { data, error } = await db.from('orders').update({ estado: 'entregado' })
-          .eq('id', orderId).eq('estado', 'listo').eq('canal', 'Salón').select().single();
+          .eq('id', orderId).eq('estado', 'listo').not('mesa', 'is', null).select().single();
         if (error || !data) return err('Ese pedido ya no está listo para servir');
         return NextResponse.json({ ok: true });
       }
@@ -110,7 +112,7 @@ export async function POST(req) {
         const mesa = String(body.mesa || '').trim();
         const metodo = ['Efectivo', 'QR', 'Tarjeta'].includes(body.metodo) ? body.metodo : 'Efectivo';
         if (!(await sesionAbierta())) return err('La caja está cerrada: pide que la abran antes de cobrar');
-        const { data: lista } = await db.from('orders').select('id').eq('canal', 'Salón').eq('mesa', mesa)
+        const { data: lista } = await db.from('orders').select('id').eq('mesa', mesa)
           .eq('pagado', false).neq('estado', 'cancelado');
         if (!lista || !lista.length) return err('Esa mesa no tiene nada pendiente de cobro');
         for (const o of lista) {

@@ -71,6 +71,7 @@ main{padding:22px 26px 40px;min-width:0}
 .c-Teléfono,.c-Telefono{background:var(--violet2);color:var(--violet)}
 .c-Salon{background:#e3f0e4;color:#2f6b3a}
 .c-Para-llevar{background:#fff0d6;color:#9a5b00}
+.c-QR-mesa{background:#e6eefc;color:#2c66d4}
 .ia{background:#211b17;color:#fff}
 .pay{background:#f1ece5;color:#5d544c}
 
@@ -323,4 +324,6 @@ main,aside{min-width:0}
 .mz-mesa span{font-weight:700;color:var(--red)}
 .mz-mesa small{color:var(--mute);font-size:12px}
 .mz-mesa.listo{border-color:var(--green);background:var(--green2)}
+.mz-mesa.qr{border-color:var(--red);background:var(--red2);animation:mzlate 1.2s ease-in-out infinite alternate}
+@keyframes mzlate{to{box-shadow:0 0 0 4px rgba(168,83,47,.25)}}
 .mz-carrito{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;background:var(--panel);border-top:1px solid var(--line);padding:10px 12px;max-height:55vh;overflow:auto;box-shadow:0 -6px 20px rgba(0,0,0,.08)}
