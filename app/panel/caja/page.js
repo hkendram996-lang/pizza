@@ -53,6 +53,19 @@ export default function Caja() {
   const totalVentas = METODOS.reduce((s, k) => s + t[k], 0);
   const pendientes = caja ? orders.filter(o => !o.pagado && o.estado !== 'cancelado' && new Date(o.created_at) >= new Date(caja.abierta_at)) : [];
 
+  // Cuentas abiertas del salón (pedidos que cargó el mozo y todavía no se cobraron)
+  const mesasMap = {};
+  orders.filter(o => o.canal === 'Salón' && o.mesa && !o.pagado && o.estado !== 'cancelado').forEach(o => {
+    mesasMap[o.mesa] = mesasMap[o.mesa] || { mesa: o.mesa, n: 0, total: 0, mozo: o.mozo };
+    mesasMap[o.mesa].n += 1; mesasMap[o.mesa].total += Number(o.total);
+  });
+  const mesasAbiertas = Object.values(mesasMap).sort((a, b) => String(a.mesa).localeCompare(String(b.mesa), 'es', { numeric: true }));
+  async function cobrarMesa(m) {
+    if (!window.confirm('¿Cobrar ' + bs(m.total) + ' de la mesa ' + m.mesa + ' con ' + pago + '?')) return;
+    try { await accion('cobrar_mesa', { mesa: m.mesa, metodo: pago }); toast('💵 Mesa ' + m.mesa + ' cobrada'); }
+    catch (e) { toast('⚠️ ' + e.message); }
+  }
+
   function agregar(id, extras = [], nota = '') {
     const k = claveLinea(id, extras, nota);
     setCart(c => c.find(l => l.k === k) ? c.map(l => l.k === k ? { ...l, q: l.q + 1 } : l) : [...c, { k, id, extras, nota, q: 1 }]);
@@ -156,6 +169,20 @@ export default function Caja() {
               </div>
             )}
           </div>
+
+          {mesasAbiertas.length > 0 && (
+            <div className="card">
+              <h3>Mesas por cobrar</h3>
+              {mesasAbiertas.map(m => (
+                <div key={m.mesa} className="sumrow" style={{ alignItems: 'center' }}>
+                  <span>Mesa {m.mesa} <span className="mute">· {m.n} pedido(s){m.mozo ? ' · ' + m.mozo : ''}</span></span>
+                  <span className="row" style={{ gap: 6 }}><b>{bs(m.total)}</b>
+                    <button className="btn sm ok" disabled={!caja} onClick={() => cobrarMesa(m)}>Cobrar ({pago})</button></span>
+                </div>
+              ))}
+              <div className="mute" style={{ fontSize: 12, marginTop: 6 }}>Se cobra con el método elegido arriba en "Nueva venta".</div>
+            </div>
+          )}
 
           {caja && Object.keys(porOrigen).length > 0 && (
             <div className="card">

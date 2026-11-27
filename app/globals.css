@@ -309,3 +309,18 @@ main,aside{min-width:0}
   .imprimible{position:absolute;left:0;top:0;width:100%;max-height:none;overflow:visible}
   .no-imprimir{display:none !important}
 }
+
+/* ---------- App del mozo (celular) ---------- */
+.mozo{max-width:640px;margin:0 auto;min-height:100vh;background:var(--bg)}
+.mz-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;background:var(--panel);border-bottom:1px solid var(--line);margin-bottom:12px}
+.mz-top b{display:block;font-size:17px}
+.mz-top small{display:block;color:var(--mute);font-size:12px}
+.mz-aviso{margin:0 12px 10px;padding:10px 12px;border-radius:10px;background:var(--ink);color:#fff;font-size:14px}
+.mz-nueva{display:grid;grid-template-columns:1fr auto;gap:8px;padding:0 12px 12px}
+.mz-mesas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 12px 30px}
+.mz-mesa{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px}
+.mz-mesa b{font-size:17px}
+.mz-mesa span{font-weight:700;color:var(--red)}
+.mz-mesa small{color:var(--mute);font-size:12px}
+.mz-mesa.listo{border-color:var(--green);background:var(--green2)}
+.mz-carrito{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;background:var(--panel);border-top:1px solid var(--line);padding:10px 12px;max-height:55vh;overflow:auto;box-shadow:0 -6px 20px rgba(0,0,0,.08)}

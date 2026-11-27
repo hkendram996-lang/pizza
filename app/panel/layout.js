@@ -42,6 +42,7 @@ export default function PanelLayout({ children }) {
       const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       if (!activo) return;
       if (p && p.rol === 'repartidor') { router.replace('/repartidor'); return; }
+      if (p && p.rol === 'mozo') { router.replace('/mozo'); return; }
       setPerfil(p || null);
     }
     revisar();

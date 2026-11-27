@@ -27,7 +27,7 @@ export default function Login() {
       const { data, error } = await supabase.auth.signInWithPassword({ email: usuarioDe(usuario), password: clave });
       if (error) throw error;
       const { data: p } = await supabase.from('profiles').select('rol').eq('id', data.user.id).single();
-      const destino = !p ? '/panel' : p.rol === 'repartidor' ? '/repartidor' : p.rol === 'cocina' ? '/panel/cocina' : '/panel';
+      const destino = !p ? '/panel' : p.rol === 'repartidor' ? '/repartidor' : p.rol === 'mozo' ? '/mozo' : p.rol === 'cocina' ? '/panel/cocina' : '/panel';
       router.replace(destino);
     } catch (err) {
       const m = err.message || '';

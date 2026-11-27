@@ -47,6 +47,7 @@ export default function Pedidos() {
       }}>A cocina</button>
     );
     else if (o.estado === 'cocina') act = <button className="btn sm" onClick={e => { e.stopPropagation(); hacer('listo', o.id); }}>Listo</button>;
+    else if (o.estado === 'listo' && o.canal === 'Salón' && !o.pagado) act = <button className="btn sm ok" onClick={e => { e.stopPropagation(); hacer('servir', o.id); }}>Servido</button>;
     else if (o.estado === 'listo' && o.tipo === 'mostrador') act = <button className="btn sm ok" onClick={e => { e.stopPropagation(); hacer('entregar', o.id); }}>Entregar</button>;
     else if (o.estado === 'listo') act = <span className="since">Esperando repartidor</span>;
     else if (o.estado === 'camino') act = <span className="since">🛵 {r ? r.nombre : ''}{r && etaMin(r, o) ? ' · ~' + etaMin(r, o) + ' min' : ''}</span>;

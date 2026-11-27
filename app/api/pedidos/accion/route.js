@@ -81,6 +81,45 @@ export async function POST(req) {
         await asignar();
         return NextResponse.json({ ok: true });
       }
+      case 'crear_mesa': {
+        // El mozo carga un pedido para una mesa: va directo a cocina y queda en la cuenta de la mesa (sin cobrar)
+        if (!['admin', 'cajero', 'mozo'].includes(staff.rol)) return err('No autorizado', 403);
+        const mesa = String(body.mesa || '').trim().slice(0, 20);
+        if (!mesa) return err('Falta el número de mesa');
+        const { data: o, error } = await db.rpc('crear_pedido', {
+          p: {
+            canal: 'Salón', tipo: 'mostrador', estado: 'cocina', mesa,
+            cliente_nombre: 'Mesa ' + mesa, metodo_pago: 'Efectivo',
+            items: limpiarItems(body.items), nota: body.nota ? String(body.nota).slice(0, 200) : null
+          }
+        });
+        if (error) return err(error.message);
+        await db.from('orders').update({ mozo: staff.nombre || null }).eq('id', o.id);
+        return NextResponse.json({ ok: true, pedido: o });
+      }
+      case 'servir': {
+        // Pedido del salón entregado en la mesa: NO se cobra aquí, se cobra con la cuenta
+        const { data, error } = await db.from('orders').update({ estado: 'entregado' })
+          .eq('id', orderId).eq('estado', 'listo').eq('canal', 'Salón').select().single();
+        if (error || !data) return err('Ese pedido ya no está listo para servir');
+        return NextResponse.json({ ok: true });
+      }
+      case 'cobrar_mesa': {
+        // Cobra todos los pedidos sin pagar de una mesa con el mismo método
+        if (!['admin', 'cajero', 'mozo'].includes(staff.rol)) return err('No autorizado', 403);
+        const mesa = String(body.mesa || '').trim();
+        const metodo = ['Efectivo', 'QR', 'Tarjeta'].includes(body.metodo) ? body.metodo : 'Efectivo';
+        if (!(await sesionAbierta())) return err('La caja está cerrada: pide que la abran antes de cobrar');
+        const { data: lista } = await db.from('orders').select('id').eq('canal', 'Salón').eq('mesa', mesa)
+          .eq('pagado', false).neq('estado', 'cancelado');
+        if (!lista || !lista.length) return err('Esa mesa no tiene nada pendiente de cobro');
+        for (const o of lista) {
+          await db.from('orders').update({ metodo_pago: metodo }).eq('id', o.id);
+          const { error } = await db.rpc('registrar_cobro', { p_order: o.id });
+          if (error) throw error;
+        }
+        return NextResponse.json({ ok: true, cobrados: lista.length });
+      }
       case 'crear_mostrador': {
         const items = limpiarItems(body.items);
         const canal = ORIGENES_LOCAL.includes(body.canal) ? body.canal : 'Mostrador';

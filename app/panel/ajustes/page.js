@@ -6,7 +6,7 @@ import { supabase, apiPost } from '@/lib/supabaseClient';
 import { bs } from '@/lib/format';
 import Probador from '@/components/Probador';
 
-const ROLES = ['pendiente', 'admin', 'cajero', 'cocina', 'repartidor'];
+const ROLES = ['pendiente', 'admin', 'cajero', 'cocina', 'repartidor', 'mozo'];
 const COLORES = ['#d6402b', '#2c66d4', '#6a4fc9', '#b97d0c', '#2f8a58', '#c2306f', '#0f8b8d'];
 
 export default function Ajustes() {
@@ -154,7 +154,7 @@ export default function Ajustes() {
   );
 }
 
-const ETIQUETA = { admin: 'Administrador', cajero: 'Cajero/a', cocina: 'Cocina', repartidor: 'Repartidor', pendiente: 'Sin acceso' };
+const ETIQUETA = { admin: 'Administrador', cajero: 'Cajero/a', cocina: 'Cocina', repartidor: 'Repartidor', mozo: 'Mozo', pendiente: 'Sin acceso' };
 const pinAlAzar = () => String(Math.floor(100000 + Math.random() * 900000));
 const telVisible = t => (t ? (t.startsWith('591') ? t.slice(3) : t) : '');
 
@@ -182,7 +182,7 @@ function Equipo({ usuarios, equipo, cambiarRol }) {
           <div><label className="fl">PIN</label><input className="inp" inputMode="numeric" maxLength={6} value={n.pin} onChange={e => setN({ ...n, pin: e.target.value.replace(/\D/g, '') })} /></div>
           <div><label className="fl">Rol</label>
             <select className="inp" value={n.rol} onChange={e => setN({ ...n, rol: e.target.value })}>
-              {['cajero', 'cocina', 'repartidor', 'admin'].map(r => <option key={r} value={r}>{ETIQUETA[r]}</option>)}
+              {['cajero', 'mozo', 'cocina', 'repartidor', 'admin'].map(r => <option key={r} value={r}>{ETIQUETA[r]}</option>)}
             </select></div>
           <div><label className="fl">&nbsp;</label><button className="btn pri" onClick={crear}>Crear</button></div>
         </div>
@@ -205,7 +205,7 @@ function Equipo({ usuarios, equipo, cambiarRol }) {
                 <td className="mute">{u.telefono ? '📱 ' + telVisible(u.telefono) : u.email}</td>
                 <td>
                   <select className="inp" style={{ width: 140 }} value={u.rol} onChange={e => cambiarRol(u.id, e.target.value)}>
-                    {(u.rol === 'pendiente' ? ['pendiente'] : []).concat(['cajero', 'cocina', 'repartidor', 'admin']).map(r => <option key={r} value={r}>{ETIQUETA[r]}</option>)}
+                    {(u.rol === 'pendiente' ? ['pendiente'] : []).concat(['cajero', 'mozo', 'cocina', 'repartidor', 'admin']).map(r => <option key={r} value={r}>{ETIQUETA[r]}</option>)}
                   </select>
                 </td>
                 <td className="r"><button className={'tgl' + (u.activo !== false ? ' on' : '')} aria-label="Activo"

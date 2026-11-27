@@ -3,7 +3,7 @@ import { admin, requireStaff } from '@/lib/supabaseAdmin';
 
 export const dynamic = 'force-dynamic';
 
-const ROLES = ['admin', 'cajero', 'cocina', 'repartidor'];
+const ROLES = ['admin', 'cajero', 'cocina', 'repartidor', 'mozo'];
 const COLORES = ['#a8532f', '#2c66d4', '#6a4fc9', '#b97d0c', '#2f8a58', '#c2306f', '#0f8b8d'];
 
 // Solo dígitos; si es un celular boliviano de 8 dígitos, se le agrega 591
